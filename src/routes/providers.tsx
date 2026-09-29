@@ -211,19 +211,6 @@ function ProvidersPage() {
         subtitle="Connect any provider: point CBS at the provider's API or at its sandbox. Wallet reloads route to the enabled provider with the lowest priority number."
       />
 
-      {notice ? (
-        <div
-          className={cn(
-            "rounded-md border p-3 text-sm",
-            notice.tone === "success"
-              ? "border-success/30 bg-success/10 text-success"
-              : "border-destructive/30 bg-destructive/10 text-destructive",
-          )}
-        >
-          {notice.text}
-        </div>
-      ) : null}
-
       <section className="panel p-5 sm:p-6">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
           <div>
@@ -319,6 +306,18 @@ function ProvidersPage() {
           </div>
         </form>
       </section>
+      {notice ? (
+        <div
+          className={cn(
+            "rounded-md border p-3 text-sm",
+            notice.tone === "success"
+              ? "border-success/30 bg-success/10 text-success"
+              : "border-destructive/30 bg-destructive/10 text-destructive",
+          )}
+        >
+          {notice.text}
+        </div>
+      ) : null}
 
       <section className="space-y-3">
         <h2 className="label-caps">Providers</h2>

@@ -1,6 +1,32 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+/** One-time lazy seed: fills the senangPay sandbox Client ID if the database predates it. */
+let senangPaySeed: Promise<void> | null = null;
+function ensureSenangPayClientId(): Promise<void> {
+  senangPaySeed ??= (async () => {
+    try {
+      const m = await import("./mysql.server");
+      const { encryptCredential } = await import("./credentials.server");
+      const provider = await m.one<{ id: string }>("SELECT id FROM payment_providers WHERE code = 'SENANGPAY' AND environment = 'sandbox'");
+      if (!provider) return;
+      const cred = await m.one<{ encrypted_value: string | null }>(
+        "SELECT encrypted_value FROM payment_provider_credentials WHERE provider_id = ? AND environment = 'sandbox' AND credential_key = 'client_id'",
+        [provider.id],
+      );
+      if (!cred) return;
+      if (cred.encrypted_value) return;
+      await m.query(
+        "UPDATE payment_provider_credentials SET encrypted_value = ? WHERE provider_id = ? AND environment = 'sandbox' AND credential_key = 'client_id'",
+        [encryptCredential("BRN-0221-1790574635839"), provider.id],
+      );
+    } catch {
+      senangPaySeed = null;
+    }
+  })();
+  return senangPaySeed;
+}
+
 const optionalText = z
   .string()
   .trim()
@@ -191,6 +217,7 @@ export const testPaymentProvider = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const staff = await (await import("./mysql.server")).requireAdmin();
     void staff;
+    await ensureSenangPayClientId();
     const { one } = await import("./mysql.server");
     const { pingProvider } = await import("./payment-gateway.server");
     const provider = await one("SELECT * FROM payment_providers WHERE id = ?", [data.providerId]);
@@ -358,6 +385,7 @@ export const listProviderCredentials = createServerFn({ method: "POST" })
   .inputValidator((input: { providerId: string }) => z.object({ providerId: z.string().uuid() }).parse(input))
   .handler(async ({ data }): Promise<ProviderCredentialView[]> => {
     const m = await import("./mysql.server");
+    await ensureSenangPayClientId();
     await m.requireStaff();
     const { decryptCredential } = await import("./credentials.server");
     const rows = await m.query<{

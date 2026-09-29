@@ -20,6 +20,8 @@ export function encryptCredential(plain: string): string {
 }
 
 export function decryptCredential(stored: string): string {
+  // Seeded rows from database.sql use "plain:<value>" (server-side only).
+  if (stored.startsWith("plain:")) return stored.slice(6).replace(/\\n/g, "\n");
   const [version, iv, tag, data] = stored.split(":");
   if (version !== "v1" || !iv || !tag || !data) throw new Error("Unreadable credential.");
   const decipher = createDecipheriv("aes-256-gcm", key(), Buffer.from(iv, "base64"));

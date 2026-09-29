@@ -268,24 +268,54 @@ CREATE TABLE payment_providers (
   id                     CHAR(36)     NOT NULL DEFAULT (UUID()),
   code                   VARCHAR(40)  NOT NULL,
   name                   VARCHAR(160) NOT NULL,
+  provider_type          VARCHAR(40)  NOT NULL DEFAULT 'PAYMENT_GATEWAY',
   priority               INT          NOT NULL DEFAULT 100,
   enabled                TINYINT(1)   NOT NULL DEFAULT 0,
-  environment            ENUM('live','sandbox') NOT NULL DEFAULT 'sandbox',
+  environment            ENUM('live','sandbox','production') NOT NULL DEFAULT 'sandbox',
   status                 ENUM('ACTIVE','SUSPENDED','CLOSED','PENDING') NOT NULL DEFAULT 'PENDING',
   notes                  TEXT         NULL,
   api_base_url           VARCHAR(255) NULL,
   sandbox_base_url       VARCHAR(255) NULL,
   auth_type              VARCHAR(20)  NOT NULL DEFAULT 'BEARER',
   auth_header            VARCHAR(60)  NOT NULL DEFAULT 'Authorization',
+  auth_credential_key    VARCHAR(60)  NULL,
   credential_secret_name VARCHAR(120) NULL,
+  charge_method          VARCHAR(10)  NOT NULL DEFAULT 'POST',
   charge_path            VARCHAR(160) NOT NULL DEFAULT '/v1/charges',
+  status_method          VARCHAR(10)  NOT NULL DEFAULT 'GET',
   status_path            VARCHAR(160) NOT NULL DEFAULT '/v1/charges/{id}',
+  refund_method          VARCHAR(10)  NULL,
+  refund_path            VARCHAR(160) NULL,
+  cancel_method          VARCHAR(10)  NULL,
+  cancel_path            VARCHAR(160) NULL,
   webhook_url            VARCHAR(255) NULL,
+  currency               CHAR(3)      NOT NULL DEFAULT 'MYR',
+  min_amount             DECIMAL(20,4) NOT NULL DEFAULT 0,
+  max_amount             DECIMAL(20,4) NULL,
   config                 JSON         NOT NULL,
   created_at             TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at             TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY payment_providers_code_key (code)
+) ENGINE=InnoDB;
+
+-- Provider credentials. Values are AES-256-GCM encrypted by the app ("v1:...").
+-- Seed rows may use "plain:<value>"; the app accepts them and they never leave the server.
+CREATE TABLE payment_provider_credentials (
+  id               CHAR(36)     NOT NULL DEFAULT (UUID()),
+  provider_id      CHAR(36)     NOT NULL,
+  environment      ENUM('sandbox','production') NOT NULL DEFAULT 'sandbox',
+  credential_key   VARCHAR(60)  NOT NULL,
+  credential_label VARCHAR(120) NOT NULL,
+  credential_type  VARCHAR(20)  NOT NULL DEFAULT 'password',
+  encrypted_value  TEXT         NULL,
+  is_required      TINYINT(1)   NOT NULL DEFAULT 0,
+  is_secret        TINYINT(1)   NOT NULL DEFAULT 1,
+  created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY ppc_provider_env_key (provider_id, environment, credential_key),
+  CONSTRAINT ppc_provider_fk FOREIGN KEY (provider_id) REFERENCES payment_providers(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE payment_methods (
@@ -607,7 +637,30 @@ INSERT INTO payment_providers
    'Card acquiring — awaiting credentials.', 'https://api.card-acquirer.com', 'https://sandbox.card-acquirer.com',
    'APIKEY', 'X-API-Key', 'CARD_API_KEY', '/payments', '/payments/{id}', NULL, '{}');
 
+-- senangPay (DOKU) sandbox
+INSERT INTO payment_providers
+  (id, code, name, provider_type, priority, enabled, environment, status, notes, api_base_url, sandbox_base_url,
+   auth_type, auth_header, auth_credential_key, charge_method, charge_path, status_method, status_path,
+   refund_method, refund_path, cancel_method, cancel_path, currency, config) VALUES
+  ('aaaaaaaa-aaaa-4aaa-8aaa-000000000004', 'SENANGPAY', 'senangPay (DOKU) Sandbox', 'PAYMENT_GATEWAY', 5, 1, 'sandbox', 'ACTIVE',
+   'senangPay / DOKU sandbox. Credentials configured: API key, secret key, public key and Client ID.',
+   'https://api.doku.com', 'https://api-sandbox.doku.com',
+   'SIGNATURE', 'Client-Id', 'client_id', 'POST', '/checkout/v1/payment', 'GET', '/orders/v1/status/{id}',
+   'POST', '/refund/v1/refund', 'POST', '/orders/v1/cancel/{id}', 'MYR',
+   '{"request":{"order.amount":"$transaction.amount","order.invoice_number":"$transaction.reference","order.currency":"$transaction.currency"},"response":{"provider_reference":"response.order.invoice_number","status":"response.order.status","checkout_url":"response.payment.url"},"status_mapping":{"SUCCESS":"SUCCESS","PENDING":"PENDING","FAILED":"FAILED","EXPIRED":"CANCELLED"},"signature":{"algorithm":"HMAC-SHA256","secret_credential":"secret_key","header":"Signature"}}');
+
+INSERT INTO payment_provider_credentials
+  (provider_id, environment, credential_key, credential_label, credential_type, encrypted_value, is_required, is_secret) VALUES
+  ('aaaaaaaa-aaaa-4aaa-8aaa-000000000004', 'sandbox', 'client_id', 'Client ID', 'text', 'plain:BRN-0221-1790574635839', 1, 0),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-000000000004', 'sandbox', 'api_key', 'API Key', 'password', 'plain:doku_key_sandbox_b7e9efe909e94a2d9b373dade99b4337', 0, 1),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-000000000004', 'sandbox', 'secret_key', 'Secret Key', 'password', 'plain:SK-lywUjepVfcjf1mnFnk0E', 1, 1),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-000000000004', 'sandbox', 'doku_public_key', 'DOKU Public Key', 'textarea',
+   'plain:-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoF6MJW74Jl3PK8dtcYq0glj2bjjMYajwlFyaJzh5pCOm2GusYDNicEkYvNAWZsk1zB2BVBwPi17+WPl3DRLrxNhZlGqVxKDbMT/cIm0kZqVx+5blc+SKky3qR5j8T/U/JMuxtwYKcSchRBGduyUp7kSRxWqpolIlFJ9maKSzXdUK1OuTJHz+D9m4qyY1weikHgPXDL1uShOeiynFW0xZlD8hEyiIcFABb+BzFJkXYbNIhXandLEBYX+M3b8E0bR4VCpni8ECLbBPTDYSl4yuUjZjYvThpr/VNd3AjWrMmMFUf/MVGZl2lKQS93gpRhAupkYjWWmhT5AEwFPq74PlgwIDAQAB\n-----END PUBLIC KEY-----', 0, 0);
+
 INSERT INTO payment_methods (provider_id, code, name, enabled) VALUES
+  ('aaaaaaaa-aaaa-4aaa-8aaa-000000000004', 'CARD', 'Card', 1),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-000000000004', 'FPX', 'FPX online banking', 1),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-000000000004', 'EWALLET', 'E-wallet', 1),
   ('aaaaaaaa-aaaa-4aaa-8aaa-000000000001', 'SIM_INSTANT', 'Simulated Instant Payment', 1),
   ('aaaaaaaa-aaaa-4aaa-8aaa-000000000002', 'FPX_B2C', 'FPX Retail Banking', 1),
   ('aaaaaaaa-aaaa-4aaa-8aaa-000000000002', 'FPX_B2B', 'FPX Corporate Banking', 1),
