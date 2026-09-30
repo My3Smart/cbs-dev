@@ -19,7 +19,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- ---------------------------------------------------------------------
 CREATE TABLE staff_users (
   id                   CHAR(36)     NOT NULL DEFAULT (UUID()),
-  email                VARCHAR(255) NOT NULL,
+  email                VARCHAR(255) NOT NULL, 
   full_name            VARCHAR(160) NULL,
   password_hash        VARCHAR(255) NOT NULL,
   must_change_password TINYINT(1)   NOT NULL DEFAULT 0,
@@ -630,9 +630,6 @@ INSERT INTO payment_providers
   ('aaaaaaaa-aaaa-4aaa-8aaa-000000000001', 'SANDBOX', 'CBS Sandbox Gateway', 10, 1, 'sandbox', 'ACTIVE',
    'Built-in simulator: charges succeed immediately. Use for testing.', NULL, 'https://sandbox.local/cbs',
    'BEARER', 'Authorization', 'SANDBOX_API_KEY', '/v1/charges', '/v1/charges/{id}', NULL, '{"simulate":true}'),
-  ('aaaaaaaa-aaaa-4aaa-8aaa-000000000002', 'FPX', 'FPX Online Banking', 20, 0, 'sandbox', 'PENDING',
-   'Add the live base URL and API key before enabling.', 'https://api.fpx-provider.com', 'https://sandbox.fpx-provider.com',
-   'BEARER', 'Authorization', 'FPX_API_KEY', '/v1/charges', '/v1/charges/{id}', NULL, '{}'),
   ('aaaaaaaa-aaaa-4aaa-8aaa-000000000003', 'CARD', 'Card Acquirer', 30, 0, 'sandbox', 'PENDING',
    'Card acquiring — awaiting credentials.', 'https://api.card-acquirer.com', 'https://sandbox.card-acquirer.com',
    'APIKEY', 'X-API-Key', 'CARD_API_KEY', '/payments', '/payments/{id}', NULL, '{}');
