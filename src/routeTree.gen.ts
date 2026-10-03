@@ -14,6 +14,7 @@ import { Route as AdjustmentsRouteImport } from './routes/adjustments'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ClustersRouteImport } from './routes/clusters'
+import { Route as DependentsRouteImport } from './routes/dependents'
 import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as MerchantsRouteImport } from './routes/merchants'
 import { Route as OrganizationsRouteImport } from './routes/organizations'
@@ -49,6 +50,11 @@ const AuthRoute = AuthRouteImport.update({
 const ClustersRoute = ClustersRouteImport.update({
   id: '/clusters',
   path: '/clusters',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DependentsRoute = DependentsRouteImport.update({
+  id: '/dependents',
+  path: '/dependents',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LedgerRoute = LedgerRouteImport.update({
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/audit': typeof AuditRoute
   '/auth': typeof AuthRoute
   '/clusters': typeof ClustersRoute
+  '/dependents': typeof DependentsRoute
   '/ledger': typeof LedgerRoute
   '/merchants': typeof MerchantsRoute
   '/organizations': typeof OrganizationsRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/audit': typeof AuditRoute
   '/auth': typeof AuthRoute
   '/clusters': typeof ClustersRoute
+  '/dependents': typeof DependentsRoute
   '/ledger': typeof LedgerRoute
   '/merchants': typeof MerchantsRoute
   '/organizations': typeof OrganizationsRoute
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/audit': typeof AuditRoute
   '/auth': typeof AuthRoute
   '/clusters': typeof ClustersRoute
+  '/dependents': typeof DependentsRoute
   '/ledger': typeof LedgerRoute
   '/merchants': typeof MerchantsRoute
   '/organizations': typeof OrganizationsRoute
@@ -170,6 +179,7 @@ export interface FileRouteTypes {
     | '/audit'
     | '/auth'
     | '/clusters'
+    | '/dependents'
     | '/ledger'
     | '/merchants'
     | '/organizations'
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/audit'
     | '/auth'
     | '/clusters'
+    | '/dependents'
     | '/ledger'
     | '/merchants'
     | '/organizations'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/audit'
     | '/auth'
     | '/clusters'
+    | '/dependents'
     | '/ledger'
     | '/merchants'
     | '/organizations'
@@ -225,6 +237,7 @@ export interface RootRouteChildren {
   AuditRoute: typeof AuditRoute
   AuthRoute: typeof AuthRoute
   ClustersRoute: typeof ClustersRoute
+  DependentsRoute: typeof DependentsRoute
   LedgerRoute: typeof LedgerRoute
   MerchantsRoute: typeof MerchantsRoute
   OrganizationsRoute: typeof OrganizationsRoute
@@ -273,6 +286,13 @@ declare module '@tanstack/react-router' {
       path: '/clusters'
       fullPath: '/clusters'
       preLoaderRoute: typeof ClustersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dependents': {
+      id: '/dependents'
+      path: '/dependents'
+      fullPath: '/dependents'
+      preLoaderRoute: typeof DependentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ledger': {
@@ -361,6 +381,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuditRoute: AuditRoute,
   AuthRoute: AuthRoute,
   ClustersRoute: ClustersRoute,
+  DependentsRoute: DependentsRoute,
   LedgerRoute: LedgerRoute,
   MerchantsRoute: MerchantsRoute,
   OrganizationsRoute: OrganizationsRoute,

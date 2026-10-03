@@ -35,6 +35,7 @@ const registrationSchema = z.discriminatedUnion("kind", [
     email: z.string().trim().email().optional().or(z.literal("")).transform((value) => value || null),
     mobile: optionalText,
     kycStatus: z.enum(["UNVERIFIED", "PENDING", "VERIFIED"]),
+    password: z.string().min(6).max(200),
     status,
   }),
   z.object({
@@ -49,6 +50,7 @@ const registrationSchema = z.discriminatedUnion("kind", [
     mobile: optionalText,
     businessAddress: z.string().trim().max(500).optional().transform((value) => value || null),
     settlementCycle: z.string().trim().min(2).max(40),
+    password: z.string().min(6).max(200),
     status,
   }),
 ]);
@@ -60,6 +62,12 @@ export const registerEntity = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const m = await import("./mysql.server");
     const staff = await m.requireAdmin();
+    let passwordHash: string | null = null;
+    if (data.kind === "user" || data.kind === "merchant") {
+      const bcrypt = (await import("bcryptjs")).default;
+      passwordHash = await bcrypt.hash(data.password, 10);
+      await m.ensurePasswordColumns();
+    }
 
     return m.tx(async (conn) => {
       const id = await m.newId(conn);
@@ -88,9 +96,9 @@ export const registerEntity = createServerFn({ method: "POST" })
         label = data.name;
       } else if (data.kind === "user") {
         await conn.query(
-          `INSERT INTO users (id, organization_id, cluster_id, user_code, full_name, email, mobile, kyc_status, status)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [id, data.organizationId, data.clusterId, data.userCode, data.fullName, data.email, data.mobile, data.kycStatus, data.status],
+          `INSERT INTO users (id, organization_id, cluster_id, user_code, full_name, email, mobile, password_hash, kyc_status, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [id, data.organizationId, data.clusterId, data.userCode, data.fullName, data.email, data.mobile, passwordHash, data.kycStatus, data.status],
         );
         await conn.query(
           "INSERT INTO parties (id, user_id, organization_id, party_type, display_name, status) VALUES (?, ?, ?, 'USER', ?, ?)",
@@ -101,9 +109,9 @@ export const registerEntity = createServerFn({ method: "POST" })
         label = data.fullName;
       } else {
         await conn.query(
-          `INSERT INTO merchants (id, organization_id, cluster_id, merchant_code, business_name, legal_name, registration_number, email, mobile, business_address, settlement_cycle, status)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [id, data.organizationId, data.clusterId, data.merchantCode, data.businessName, data.legalName, data.registrationNumber, data.email, data.mobile, data.businessAddress, data.settlementCycle, data.status],
+          `INSERT INTO merchants (id, organization_id, cluster_id, merchant_code, business_name, legal_name, registration_number, email, mobile, business_address, settlement_cycle, password_hash, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [id, data.organizationId, data.clusterId, data.merchantCode, data.businessName, data.legalName, data.registrationNumber, data.email, data.mobile, data.businessAddress, data.settlementCycle, passwordHash, data.status],
         );
         await conn.query(
           "INSERT INTO parties (id, merchant_id, organization_id, party_type, display_name, status) VALUES (?, ?, ?, 'MERCHANT', ?, ?)",

@@ -30,7 +30,7 @@ export const Route = createFileRoute(
            */
           const authUser = await requireCbsUser(request)
 
-          const dependents = await query<DependentRow[]>(
+          const dependents = await query<DependentRow>(
             `
             SELECT
               ud.id AS dependent_id,

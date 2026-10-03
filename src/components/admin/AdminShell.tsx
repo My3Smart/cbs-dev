@@ -15,6 +15,7 @@ import {
   LogOut,
   Coins,
   ClipboardPlus,
+  Baby,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -29,6 +30,7 @@ const nav = [
   { to: "/organizations", label: "Organizations", icon: Building2, group: "Details" },
   { to: "/clusters", label: "Clusters", icon: Layers, group: "Details" },
   { to: "/users", label: "Users", icon: Users, group: "Details" },
+  { to: "/dependents", label: "Dependents", icon: Baby, group: "Details" },
   { to: "/merchants", label: "Merchants", icon: Store, group: "Details" },
   { to: "/wallets", label: "Accounts & Wallets", icon: Wallet, group: "Financial" },
   { to: "/adjustments", label: "Debit / Credit", icon: Coins, group: "Financial" },

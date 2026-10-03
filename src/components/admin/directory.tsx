@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { StatusPill } from "@/components/admin/primitives";
 import { addDependent, getProfile, type ProfileKind } from "@/lib/profiles.functions";
 import { dateTime, money } from "@/lib/format";
+import { CardTagging } from "@/components/admin/CardTagging";
 
 /* ---------- Search + filter ---------- */
 
@@ -199,6 +200,9 @@ export function ProfileSheet({
                 )}
               </section>
             ) : null}
+
+            {kind === "user" && data.guardian && id ? <CardTagging userId={id} /> : null}
+
 
             <section>
               <h3 className="mb-1 text-sm font-semibold">Details</h3>

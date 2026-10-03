@@ -722,3 +722,22 @@ SELECT wallet_number, currency, available_balance FROM wallets ORDER BY wallet_n
 -- UPDATE 02102026
 ALTER TABLE users
 ADD COLUMN password_hash VARCHAR(255) NULL AFTER mobile;
+
+-- UPDATE 04102026: merchant passwords + NFC cards tagged to dependents
+ALTER TABLE merchants
+ADD COLUMN password_hash VARCHAR(255) NULL AFTER mobile;
+
+CREATE TABLE IF NOT EXISTS dependent_cards (
+  id         CHAR(36)    NOT NULL DEFAULT (UUID()),
+  user_id    CHAR(36)    NOT NULL,             -- the dependent (child) user
+  card_uid   VARCHAR(64) NOT NULL,             -- NFC card serial / UID
+  card_type  VARCHAR(40) NULL,
+  card_data  TEXT        NULL,                 -- raw data read from the card
+  status     ENUM('ACTIVE','BLOCKED') NOT NULL DEFAULT 'ACTIVE',
+  tagged_by  CHAR(36)    NULL,
+  tagged_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY dependent_cards_user_key (user_id),
+  UNIQUE KEY dependent_cards_uid_key (card_uid),
+  CONSTRAINT dependent_cards_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;

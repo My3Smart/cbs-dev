@@ -12,7 +12,30 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { getCookie } from "@tanstack/react-start/server";
 
 let pool: Pool | null = null;
+// DANIEAL
+// export function db(): Pool {
+//   if (!pool) {
+//     pool = mysql.createPool({
+//       host: process.env["MYSQL_HOST"] || "127.0.0.1",
+//       port: Number(process.env["MYSQL_PORT"] || 3306),
+//       user: process.env["MYSQL_USER"] || "root",
+//       password: process.env["MYSQL_PASSWORD"] ?? "root",
+//       database: process.env["MYSQL_DATABASE"] || "cbs",
+//       timezone: "Z",
+//       connectionLimit: 10,
+//       typeCast(field, next) {
+//         if (field.type === "TINY" && field.length === 1) {
+//           const v = field.string();
+//           return v === null ? null : v === "1";
+//         }
+//         return next();
+//       },
+//     });
+//   }
+//   return pool;
+// }
 
+// HANIM
 export function db(): Pool {
   if (!pool) {
     pool = mysql.createPool({
@@ -411,4 +434,22 @@ export async function listTable(args: {
   );
   await attach(args.table, rows, children);
   return rows;
+}
+
+/* Adds password_hash to users/merchants on databases imported before it existed. */
+let passwordColumnsReady: Promise<void> | null = null;
+export function ensurePasswordColumns() {
+  passwordColumnsReady ??= (async () => {
+    for (const table of ["users", "merchants"]) {
+      const col = await one(
+        "SELECT 1 AS x FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = 'password_hash'",
+        [table],
+      );
+      if (!col) await query(`ALTER TABLE ${table} ADD COLUMN password_hash VARCHAR(255) NULL AFTER mobile`);
+    }
+  })().catch((e) => {
+    passwordColumnsReady = null;
+    throw e;
+  });
+  return passwordColumnsReady;
 }

@@ -37,12 +37,12 @@ import jwt from "jsonwebtoken";
 /* Environment                                                               */
 /* -------------------------------------------------------------------------- */
 
-const CBS_WALLET_API_KEY = process.env.CBS_WALLET_API_KEY;
+const CBS_WALLET_API_KEY = process.env['CBS_WALLET_API_KEY'];
 
-const CBS_USER_JWT_SECRET = process.env.CBS_USER_JWT_SECRET;
+const CBS_USER_JWT_SECRET = process.env['CBS_USER_JWT_SECRET'];
 
 const CBS_USER_JWT_EXPIRES_IN =
-  process.env.CBS_USER_JWT_EXPIRES_IN ?? "12h";
+  process.env['CBS_USER_JWT_EXPIRES_IN'] ?? "12h";
 
 /* -------------------------------------------------------------------------- */
 /* Types                                                                      */
@@ -175,11 +175,11 @@ function getBearerToken(request: Request): string {
     unauthorized("Invalid Authorization header.");
   }
 
-  if (parts[0].toLowerCase() !== "bearer") {
+  if ((parts[0] ?? "").toLowerCase() !== "bearer") {
     unauthorized("Authorization scheme must be Bearer.");
   }
 
-  return parts[1];
+  return parts[1] ?? "";
 }
 
 /* -------------------------------------------------------------------------- */
@@ -260,7 +260,7 @@ export function createUserAccessToken(
 
   return jwt.sign(
     payload,
-    CBS_USER_JWT_SECRET,
+    CBS_USER_JWT_SECRET as string,
     {
       expiresIn: CBS_USER_JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"],
       issuer: "cbs",

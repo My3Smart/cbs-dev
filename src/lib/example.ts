@@ -26,11 +26,11 @@
 /* -------------------------------------------------------------------------- */
 
 const CBS_API_URL =
-  process.env.CBS_API_URL ??
+  process.env['CBS_API_URL'] ??
   "http://localhost:3000/api/v1";
 
 const CBS_WALLET_API_KEY =
-  process.env.CBS_WALLET_API_KEY;
+  process.env['CBS_WALLET_API_KEY'];
 
 /* -------------------------------------------------------------------------- */
 /* Types                                                                      */
