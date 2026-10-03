@@ -23,6 +23,8 @@ import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as TransfersRouteImport } from './routes/transfers'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as WalletsRouteImport } from './routes/wallets'
+import { Route as ApiV1AuthLoginRouteImport } from './routes/api/v1/auth/login'
+import { Route as ApiV1UsersMeDependentsRouteImport } from './routes/api/v1/users/me/dependents'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -94,6 +96,16 @@ const WalletsRoute = WalletsRouteImport.update({
   path: '/wallets',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1AuthLoginRoute = ApiV1AuthLoginRouteImport.update({
+  id: '/api/v1/auth/login',
+  path: '/api/v1/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1UsersMeDependentsRoute = ApiV1UsersMeDependentsRouteImport.update({
+  id: '/api/v1/users/me/dependents',
+  path: '/api/v1/users/me/dependents',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +122,8 @@ export interface FileRoutesByFullPath {
   '/transfers': typeof TransfersRoute
   '/users': typeof UsersRoute
   '/wallets': typeof WalletsRoute
+  '/api/v1/auth/login': typeof ApiV1AuthLoginRoute
+  '/api/v1/users/me/dependents': typeof ApiV1UsersMeDependentsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -126,6 +140,8 @@ export interface FileRoutesByTo {
   '/transfers': typeof TransfersRoute
   '/users': typeof UsersRoute
   '/wallets': typeof WalletsRoute
+  '/api/v1/auth/login': typeof ApiV1AuthLoginRoute
+  '/api/v1/users/me/dependents': typeof ApiV1UsersMeDependentsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,6 +159,8 @@ export interface FileRoutesById {
   '/transfers': typeof TransfersRoute
   '/users': typeof UsersRoute
   '/wallets': typeof WalletsRoute
+  '/api/v1/auth/login': typeof ApiV1AuthLoginRoute
+  '/api/v1/users/me/dependents': typeof ApiV1UsersMeDependentsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +179,8 @@ export interface FileRouteTypes {
     | '/transfers'
     | '/users'
     | '/wallets'
+    | '/api/v1/auth/login'
+    | '/api/v1/users/me/dependents'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -177,6 +197,8 @@ export interface FileRouteTypes {
     | '/transfers'
     | '/users'
     | '/wallets'
+    | '/api/v1/auth/login'
+    | '/api/v1/users/me/dependents'
   id:
     | '__root__'
     | '/'
@@ -193,6 +215,8 @@ export interface FileRouteTypes {
     | '/transfers'
     | '/users'
     | '/wallets'
+    | '/api/v1/auth/login'
+    | '/api/v1/users/me/dependents'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -210,6 +234,8 @@ export interface RootRouteChildren {
   TransfersRoute: typeof TransfersRoute
   UsersRoute: typeof UsersRoute
   WalletsRoute: typeof WalletsRoute
+  ApiV1AuthLoginRoute: typeof ApiV1AuthLoginRoute
+  ApiV1UsersMeDependentsRoute: typeof ApiV1UsersMeDependentsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -312,6 +338,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WalletsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/auth/login': {
+      id: '/api/v1/auth/login'
+      path: '/api/v1/auth/login'
+      fullPath: '/api/v1/auth/login'
+      preLoaderRoute: typeof ApiV1AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/users/me/dependents': {
+      id: '/api/v1/users/me/dependents'
+      path: '/api/v1/users/me/dependents'
+      fullPath: '/api/v1/users/me/dependents'
+      preLoaderRoute: typeof ApiV1UsersMeDependentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -330,6 +370,8 @@ const rootRouteChildren: RootRouteChildren = {
   TransfersRoute: TransfersRoute,
   UsersRoute: UsersRoute,
   WalletsRoute: WalletsRoute,
+  ApiV1AuthLoginRoute: ApiV1AuthLoginRoute,
+  ApiV1UsersMeDependentsRoute: ApiV1UsersMeDependentsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

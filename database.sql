@@ -718,3 +718,7 @@ SELECT
   (SELECT COALESCE(SUM(amount),0) FROM ledger_entries WHERE direction='CREDIT') AS total_credits;
 
 SELECT wallet_number, currency, available_balance FROM wallets ORDER BY wallet_number;
+
+-- UPDATE 02102026
+ALTER TABLE users
+ADD COLUMN password_hash VARCHAR(255) NULL AFTER mobile;
