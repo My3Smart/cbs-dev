@@ -151,7 +151,7 @@ export const Route = createFileRoute("/api/v1/auth/login")({
             success: true,
             accessToken,
             tokenType: "Bearer",
-            expiresIn: 60 * 60 * 12,
+            expiresIn: 60 * 60 * 24 * 30,
 
             user: {
               userId: user.id,

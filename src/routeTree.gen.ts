@@ -24,7 +24,11 @@ import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as TransfersRouteImport } from './routes/transfers'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as WalletsRouteImport } from './routes/wallets'
+import { Route as ApiV1MerchantsRouteImport } from './routes/api/v1/merchants'
 import { Route as ApiV1AuthLoginRouteImport } from './routes/api/v1/auth/login'
+import { Route as ApiV1UsersSyncRouteImport } from './routes/api/v1/users/sync'
+import { Route as ApiV1UsersDependentsSyncRouteImport } from './routes/api/v1/users/dependents/sync'
+import { Route as ApiV1UsersMeBalanceRouteImport } from './routes/api/v1/users/me/balance'
 import { Route as ApiV1UsersMeDependentsRouteImport } from './routes/api/v1/users/me/dependents'
 
 const IndexRoute = IndexRouteImport.update({
@@ -102,9 +106,30 @@ const WalletsRoute = WalletsRouteImport.update({
   path: '/wallets',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1MerchantsRoute = ApiV1MerchantsRouteImport.update({
+  id: '/api/v1/merchants',
+  path: '/api/v1/merchants',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1AuthLoginRoute = ApiV1AuthLoginRouteImport.update({
   id: '/api/v1/auth/login',
   path: '/api/v1/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1UsersSyncRoute = ApiV1UsersSyncRouteImport.update({
+  id: '/api/v1/users/sync',
+  path: '/api/v1/users/sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1UsersDependentsSyncRoute =
+  ApiV1UsersDependentsSyncRouteImport.update({
+    id: '/api/v1/users/dependents/sync',
+    path: '/api/v1/users/dependents/sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiV1UsersMeBalanceRoute = ApiV1UsersMeBalanceRouteImport.update({
+  id: '/api/v1/users/me/balance',
+  path: '/api/v1/users/me/balance',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiV1UsersMeDependentsRoute = ApiV1UsersMeDependentsRouteImport.update({
@@ -129,7 +154,11 @@ export interface FileRoutesByFullPath {
   '/transfers': typeof TransfersRoute
   '/users': typeof UsersRoute
   '/wallets': typeof WalletsRoute
+  '/api/v1/merchants': typeof ApiV1MerchantsRoute
   '/api/v1/auth/login': typeof ApiV1AuthLoginRoute
+  '/api/v1/users/sync': typeof ApiV1UsersSyncRoute
+  '/api/v1/users/dependents/sync': typeof ApiV1UsersDependentsSyncRoute
+  '/api/v1/users/me/balance': typeof ApiV1UsersMeBalanceRoute
   '/api/v1/users/me/dependents': typeof ApiV1UsersMeDependentsRoute
 }
 export interface FileRoutesByTo {
@@ -148,7 +177,11 @@ export interface FileRoutesByTo {
   '/transfers': typeof TransfersRoute
   '/users': typeof UsersRoute
   '/wallets': typeof WalletsRoute
+  '/api/v1/merchants': typeof ApiV1MerchantsRoute
   '/api/v1/auth/login': typeof ApiV1AuthLoginRoute
+  '/api/v1/users/sync': typeof ApiV1UsersSyncRoute
+  '/api/v1/users/dependents/sync': typeof ApiV1UsersDependentsSyncRoute
+  '/api/v1/users/me/balance': typeof ApiV1UsersMeBalanceRoute
   '/api/v1/users/me/dependents': typeof ApiV1UsersMeDependentsRoute
 }
 export interface FileRoutesById {
@@ -168,7 +201,11 @@ export interface FileRoutesById {
   '/transfers': typeof TransfersRoute
   '/users': typeof UsersRoute
   '/wallets': typeof WalletsRoute
+  '/api/v1/merchants': typeof ApiV1MerchantsRoute
   '/api/v1/auth/login': typeof ApiV1AuthLoginRoute
+  '/api/v1/users/sync': typeof ApiV1UsersSyncRoute
+  '/api/v1/users/dependents/sync': typeof ApiV1UsersDependentsSyncRoute
+  '/api/v1/users/me/balance': typeof ApiV1UsersMeBalanceRoute
   '/api/v1/users/me/dependents': typeof ApiV1UsersMeDependentsRoute
 }
 export interface FileRouteTypes {
@@ -189,7 +226,11 @@ export interface FileRouteTypes {
     | '/transfers'
     | '/users'
     | '/wallets'
+    | '/api/v1/merchants'
     | '/api/v1/auth/login'
+    | '/api/v1/users/sync'
+    | '/api/v1/users/dependents/sync'
+    | '/api/v1/users/me/balance'
     | '/api/v1/users/me/dependents'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -208,7 +249,11 @@ export interface FileRouteTypes {
     | '/transfers'
     | '/users'
     | '/wallets'
+    | '/api/v1/merchants'
     | '/api/v1/auth/login'
+    | '/api/v1/users/sync'
+    | '/api/v1/users/dependents/sync'
+    | '/api/v1/users/me/balance'
     | '/api/v1/users/me/dependents'
   id:
     | '__root__'
@@ -227,7 +272,11 @@ export interface FileRouteTypes {
     | '/transfers'
     | '/users'
     | '/wallets'
+    | '/api/v1/merchants'
     | '/api/v1/auth/login'
+    | '/api/v1/users/sync'
+    | '/api/v1/users/dependents/sync'
+    | '/api/v1/users/me/balance'
     | '/api/v1/users/me/dependents'
   fileRoutesById: FileRoutesById
 }
@@ -247,7 +296,11 @@ export interface RootRouteChildren {
   TransfersRoute: typeof TransfersRoute
   UsersRoute: typeof UsersRoute
   WalletsRoute: typeof WalletsRoute
+  ApiV1MerchantsRoute: typeof ApiV1MerchantsRoute
   ApiV1AuthLoginRoute: typeof ApiV1AuthLoginRoute
+  ApiV1UsersSyncRoute: typeof ApiV1UsersSyncRoute
+  ApiV1UsersDependentsSyncRoute: typeof ApiV1UsersDependentsSyncRoute
+  ApiV1UsersMeBalanceRoute: typeof ApiV1UsersMeBalanceRoute
   ApiV1UsersMeDependentsRoute: typeof ApiV1UsersMeDependentsRoute
 }
 
@@ -358,11 +411,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WalletsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/merchants': {
+      id: '/api/v1/merchants'
+      path: '/api/v1/merchants'
+      fullPath: '/api/v1/merchants'
+      preLoaderRoute: typeof ApiV1MerchantsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/auth/login': {
       id: '/api/v1/auth/login'
       path: '/api/v1/auth/login'
       fullPath: '/api/v1/auth/login'
       preLoaderRoute: typeof ApiV1AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/users/sync': {
+      id: '/api/v1/users/sync'
+      path: '/api/v1/users/sync'
+      fullPath: '/api/v1/users/sync'
+      preLoaderRoute: typeof ApiV1UsersSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/users/dependents/sync': {
+      id: '/api/v1/users/dependents/sync'
+      path: '/api/v1/users/dependents/sync'
+      fullPath: '/api/v1/users/dependents/sync'
+      preLoaderRoute: typeof ApiV1UsersDependentsSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/users/me/balance': {
+      id: '/api/v1/users/me/balance'
+      path: '/api/v1/users/me/balance'
+      fullPath: '/api/v1/users/me/balance'
+      preLoaderRoute: typeof ApiV1UsersMeBalanceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/users/me/dependents': {
@@ -391,7 +472,11 @@ const rootRouteChildren: RootRouteChildren = {
   TransfersRoute: TransfersRoute,
   UsersRoute: UsersRoute,
   WalletsRoute: WalletsRoute,
+  ApiV1MerchantsRoute: ApiV1MerchantsRoute,
   ApiV1AuthLoginRoute: ApiV1AuthLoginRoute,
+  ApiV1UsersSyncRoute: ApiV1UsersSyncRoute,
+  ApiV1UsersDependentsSyncRoute: ApiV1UsersDependentsSyncRoute,
+  ApiV1UsersMeBalanceRoute: ApiV1UsersMeBalanceRoute,
   ApiV1UsersMeDependentsRoute: ApiV1UsersMeDependentsRoute,
 }
 export const routeTree = rootRouteImport
