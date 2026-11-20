@@ -18,6 +18,7 @@ import { Route as DependentsRouteImport } from './routes/dependents'
 import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as MerchantsRouteImport } from './routes/merchants'
 import { Route as OrganizationsRouteImport } from './routes/organizations'
+import { Route as PaymentTestRouteImport } from './routes/payment-test'
 import { Route as ProvidersRouteImport } from './routes/providers'
 import { Route as RegistrationRouteImport } from './routes/registration'
 import { Route as TransactionsRouteImport } from './routes/transactions'
@@ -74,6 +75,11 @@ const MerchantsRoute = MerchantsRouteImport.update({
 const OrganizationsRoute = OrganizationsRouteImport.update({
   id: '/organizations',
   path: '/organizations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentTestRoute = PaymentTestRouteImport.update({
+  id: '/payment-test',
+  path: '/payment-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProvidersRoute = ProvidersRouteImport.update({
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/ledger': typeof LedgerRoute
   '/merchants': typeof MerchantsRoute
   '/organizations': typeof OrganizationsRoute
+  '/payment-test': typeof PaymentTestRoute
   '/providers': typeof ProvidersRoute
   '/registration': typeof RegistrationRoute
   '/transactions': typeof TransactionsRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByTo {
   '/ledger': typeof LedgerRoute
   '/merchants': typeof MerchantsRoute
   '/organizations': typeof OrganizationsRoute
+  '/payment-test': typeof PaymentTestRoute
   '/providers': typeof ProvidersRoute
   '/registration': typeof RegistrationRoute
   '/transactions': typeof TransactionsRoute
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   '/ledger': typeof LedgerRoute
   '/merchants': typeof MerchantsRoute
   '/organizations': typeof OrganizationsRoute
+  '/payment-test': typeof PaymentTestRoute
   '/providers': typeof ProvidersRoute
   '/registration': typeof RegistrationRoute
   '/transactions': typeof TransactionsRoute
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/ledger'
     | '/merchants'
     | '/organizations'
+    | '/payment-test'
     | '/providers'
     | '/registration'
     | '/transactions'
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/ledger'
     | '/merchants'
     | '/organizations'
+    | '/payment-test'
     | '/providers'
     | '/registration'
     | '/transactions'
@@ -266,6 +277,7 @@ export interface FileRouteTypes {
     | '/ledger'
     | '/merchants'
     | '/organizations'
+    | '/payment-test'
     | '/providers'
     | '/registration'
     | '/transactions'
@@ -290,6 +302,7 @@ export interface RootRouteChildren {
   LedgerRoute: typeof LedgerRoute
   MerchantsRoute: typeof MerchantsRoute
   OrganizationsRoute: typeof OrganizationsRoute
+  PaymentTestRoute: typeof PaymentTestRoute
   ProvidersRoute: typeof ProvidersRoute
   RegistrationRoute: typeof RegistrationRoute
   TransactionsRoute: typeof TransactionsRoute
@@ -367,6 +380,13 @@ declare module '@tanstack/react-router' {
       path: '/organizations'
       fullPath: '/organizations'
       preLoaderRoute: typeof OrganizationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payment-test': {
+      id: '/payment-test'
+      path: '/payment-test'
+      fullPath: '/payment-test'
+      preLoaderRoute: typeof PaymentTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/providers': {
@@ -466,6 +486,7 @@ const rootRouteChildren: RootRouteChildren = {
   LedgerRoute: LedgerRoute,
   MerchantsRoute: MerchantsRoute,
   OrganizationsRoute: OrganizationsRoute,
+  PaymentTestRoute: PaymentTestRoute,
   ProvidersRoute: ProvidersRoute,
   RegistrationRoute: RegistrationRoute,
   TransactionsRoute: TransactionsRoute,

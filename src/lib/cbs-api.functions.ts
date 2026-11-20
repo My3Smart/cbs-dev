@@ -260,9 +260,9 @@ export function createUserAccessToken(
 
   return jwt.sign(
     payload,
-    CBS_USER_JWT_SECRET as string,
+    CBS_USER_JWT_SECRET as jwt.Secret,
     {
-      expiresIn: CBS_USER_JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"],
+      expiresIn: CBS_USER_JWT_EXPIRES_IN as NonNullable<jwt.SignOptions["expiresIn"]>,
       issuer: "cbs",
       audience: "wallet",
     },
