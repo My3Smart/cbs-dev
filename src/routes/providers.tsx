@@ -17,16 +17,17 @@ import {
   testPaymentProvider,
 } from "@/lib/providers.functions";
 import { cn } from "@/lib/utils";
+import { PlugAndPlayPanel } from "@/components/admin/PlugAndPlayPanel";
 
 export const Route = createFileRoute("/providers")({
   head: () => ({
     meta: [
-      { title: "Payment Providers — CBS Core Ledger" },
+      { title: "Plug and Play API and Sandbox — CBS Core Ledger" },
       {
         name: "description",
         content: "Connect any payment provider API or sandbox, set routing priority and manage payment methods.",
       },
-      { property: "og:title", content: "Payment Providers — CBS Core Ledger" },
+      { property: "og:title", content: "Plug and Play API and Sandbox — CBS Core Ledger" },
       { property: "og:description", content: "Connect payment provider APIs and sandboxes for wallet reloads." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -117,6 +118,8 @@ function ProvidersPage() {
     ascending: true,
   });
 
+  const senang = (providers.data ?? []).find((p) => p.code.toUpperCase().includes("SENANG") || p.name.toLowerCase().includes("senang"));
+
   async function runTest(providerId: string) {
     setNotice(null);
     try {
@@ -206,12 +209,33 @@ function ProvidersPage() {
 
   return (
     <AdminShell>
-      <PageHeader
-        title="Payment providers"
-        subtitle="Connect any provider: point CBS at the provider's API or at its sandbox. Wallet reloads route to the enabled provider with the lowest priority number."
-      />
+      <section className="panel border-primary/40 bg-primary/5 p-5 sm:p-6">
+        <p className="label-caps text-primary">Payment providers</p>
+        <h1 className="mt-1 text-2xl font-bold tracking-wide sm:text-3xl">PLUG AND PLAY API AND SANDBOX</h1>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+          Connect any payment provider by choosing it, switching Sandbox or Production, and entering its Client ID and API key.
+          Keys are encrypted automatically and the provider is ready for wallet transactions straight away.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-md border border-border bg-background/60 p-3 text-sm">
+          <span className="font-semibold">senangPay sandbox</span>
+          {senang ? (
+            <>
+              <StatusPill value={senang.status} />
+              <span className="figure text-xs text-muted-foreground">{senang.code} · {senang.environment} · {senang.sandbox_base_url ?? senang.api_base_url ?? "—"}</span>
+              <span className="text-xs text-muted-foreground">Existing setup kept as-is.</span>
+            </>
+          ) : (
+            <span className="text-xs text-muted-foreground">{providers.isLoading ? "Checking…" : "Not found in providers list yet."}</span>
+          )}
+        </div>
+      </section>
 
-      <section className="panel p-5 sm:p-6">
+      <PlugAndPlayPanel />
+
+      <details className="panel p-5 sm:p-6">
+        <summary className="cursor-pointer label-caps">Advanced manual setup</summary>
+        <div className="mt-4">
+      <section>
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
           <div>
             <p className="label-caps">Add provider</p>
@@ -306,6 +330,8 @@ function ProvidersPage() {
           </div>
         </form>
       </section>
+        </div>
+      </details>
       {notice ? (
         <div
           className={cn(
