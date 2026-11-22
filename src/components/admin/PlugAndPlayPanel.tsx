@@ -57,11 +57,9 @@ export function PlugAndPlayPanel() {
     }
   }
 
-  // ---- Quick connect ----
+  // ---- Universal plug & play connect (one form for every provider) ----
   const connectFn = useServerFn(createPaymentProvider);
-  const templates = PROVIDER_TEMPLATES;
-  const [tplCode, setTplCode] = useState(templates.find((t) => t.code === "STRIPE")?.code ?? templates[0]!.code);
-  const tpl = useMemo(() => templates.find((t) => t.code === tplCode)!, [tplCode, templates]);
+  const base = useMemo(() => PROVIDER_TEMPLATES.find((t) => t.code === "CUSTOM")!, []);
   const [env, setEnv] = useState<"sandbox" | "production">("sandbox");
   const [connecting, setConnecting] = useState(false);
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
@@ -70,28 +68,41 @@ export function PlugAndPlayPanel() {
     e.preventDefault();
     const form = e.currentTarget;
     const v = Object.fromEntries(new FormData(form)) as Record<string, string>;
+    const name = (v["name"] ?? "").trim();
+    const slug = name.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 32) || "PROVIDER";
+    const authType = (v["authType"] || "BEARER") as "BEARER" | "HEADER_KEY" | "BASIC" | "SIGNATURE";
+    const chargePath = (v["chargePath"] ?? "").trim() || base.operations.charge.path;
+    const methods = (v["methods"] ?? "")
+      .split(",")
+      .map((x) => x.trim())
+      .filter((x) => x.length >= 2)
+      .map((x) => ({ code: x.toUpperCase().replace(/[^A-Z0-9]+/g, "_"), name: x }));
     setConnecting(true);
     setNotice(null);
     try {
       const res = await connectFn({
         data: {
-          code: v["code"] ?? tpl.code,
-          name: v["name"] ?? tpl.name,
-          providerType: tpl.providerType,
+          code: `${slug}_${env === "sandbox" ? "SBX" : "LIVE"}`,
+          name,
+          providerType: "PAYMENT_GATEWAY",
           environment: env,
           enabled: true,
           priority: 20,
-          baseUrl: v["baseUrl"] || (env === "sandbox" ? tpl.sandboxBaseUrl : tpl.productionBaseUrl),
-          authType: tpl.authType,
-          authHeader: tpl.authHeader,
-          authCredentialKey: tpl.authCredentialKey ?? "",
-          operations: tpl.operations,
-          methods: tpl.methods,
-          credentials: tpl.credentials.map((c) => ({ ...c, value: v[`cred_${c.key}`] ?? "" })),
-          fieldMapping: JSON.stringify(tpl.fieldMapping),
+          baseUrl: (v["baseUrl"] ?? "").trim(),
+          authType,
+          authHeader: authType === "HEADER_KEY" ? (v["authHeader"] || "X-API-Key") : "Authorization",
+          authCredentialKey: "api_key",
+          operations: { ...base.operations, charge: { method: "POST", path: chargePath } },
+          methods,
+          credentials: [
+            { key: "client_id", label: "Client ID", type: "text", required: false, secret: false, value: v["clientId"] ?? "" },
+            { key: "api_key", label: "API Key", type: "password", required: true, secret: true, value: v["apiKey"] ?? "" },
+          ],
+          fieldMapping: JSON.stringify(base.fieldMapping),
+          signature: authType === "SIGNATURE" ? JSON.stringify({ algorithm: "HMAC-SHA256", secret_credential: "api_key" }) : "",
         },
       });
-      setNotice({ ok: true, text: `${res.code} connected (${res.environment}). Pick it below and press "Send test payment".` });
+      setNotice({ ok: true, text: `${name} connected (${res.environment}). Pick it in the test bench and press "Send test payment".` });
       form.reset();
       await qc.invalidateQueries({ queryKey: ["table"] });
       setProviderId(res.id);
@@ -171,46 +182,63 @@ export function PlugAndPlayPanel() {
           <h2 className="mt-1 mb-4 flex items-center gap-2 text-lg font-semibold">
             <PlugZap className="size-4" /> Connect any provider API or sandbox
           </h2>
-          <form key={`${tplCode}-${env}`} onSubmit={connect} className="space-y-3">
+          <p className="mb-4 text-sm text-muted-foreground">
+            One form for every payment provider. Enter the provider's API address, Client ID and API Key — it connects
+            automatically and is ready for wallet transactions.
+          </p>
+          <form onSubmit={connect} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="tpl">Provider type</Label>
-                <select id="tpl" className={selectClass} value={tplCode} onChange={(e) => setTplCode(e.target.value)}>
-                  {templates.map((t) => (
-                    <option key={t.code} value={t.code}>{t.name}</option>
-                  ))}
-                </select>
+                <Label htmlFor="pp_name">Provider name *</Label>
+                <Input id="pp_name" name="name" required minLength={2} placeholder="e.g. Stripe, Billplz, iPay88" />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="env">Environment</Label>
-                <select id="env" className={selectClass} value={env} onChange={(e) => setEnv(e.target.value as "sandbox" | "production")}>
+                <Label htmlFor="pp_env">Environment</Label>
+                <select id="pp_env" className={selectClass} value={env} onChange={(e) => setEnv(e.target.value as "sandbox" | "production")}>
                   <option value="sandbox">Sandbox</option>
-                  <option value="production">Production</option>
+                  <option value="production">Production (live)</option>
                 </select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="code">Code (unique)</Label>
-                <Input id="code" name="code" required defaultValue={`${tpl.code}_${env === "sandbox" ? "SBX" : "LIVE"}`} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" name="name" required defaultValue={`${tpl.name} ${env === "sandbox" ? "Sandbox" : ""}`.trim()} />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="baseUrl">API base URL</Label>
-              <Input id="baseUrl" name="baseUrl" defaultValue={env === "sandbox" ? tpl.sandboxBaseUrl : tpl.productionBaseUrl} placeholder="https://api.provider.com" />
+              <Label htmlFor="pp_url">API base URL {env === "production" ? "*" : ""}</Label>
+              <Input
+                id="pp_url"
+                name="baseUrl"
+                type="url"
+                required={env === "production"}
+                placeholder={env === "sandbox" ? "https://sandbox.provider.com (empty = simulated)" : "https://api.provider.com"}
+              />
             </div>
-            {tpl.credentials.map((c) => (
-              <div key={c.key} className="space-y-1.5">
-                <Label htmlFor={`cred_${c.key}`}>{c.label}{c.required ? " *" : ""}</Label>
-                {c.type === "textarea" ? (
-                  <Textarea id={`cred_${c.key}`} name={`cred_${c.key}`} required={c.required} rows={3} />
-                ) : (
-                  <Input id={`cred_${c.key}`} name={`cred_${c.key}`} required={c.required} type={c.secret ? "password" : "text"} autoComplete="off" />
-                )}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="pp_client">Client ID / Merchant ID</Label>
+                <Input id="pp_client" name="clientId" autoComplete="off" />
               </div>
-            ))}
+              <div className="space-y-1.5">
+                <Label htmlFor="pp_key">API Key / Secret Key *</Label>
+                <Input id="pp_key" name="apiKey" type="password" required autoComplete="new-password" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="pp_auth">How the key is sent</Label>
+                <select id="pp_auth" name="authType" className={selectClass} defaultValue="BEARER">
+                  <option value="BEARER">Bearer token (most providers)</option>
+                  <option value="HEADER_KEY">API key header</option>
+                  <option value="BASIC">Basic (Client ID + Key)</option>
+                  <option value="SIGNATURE">Signed request (HMAC)</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="pp_path">Payment endpoint path</Label>
+                <Input id="pp_path" name="chargePath" placeholder={base.operations.charge.path} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="pp_methods">Payment methods (comma separated)</Label>
+              <Input id="pp_methods" name="methods" defaultValue="Card, FPX" />
+            </div>
             <p className="text-xs text-muted-foreground">Keys are encrypted before saving and never shown again in the browser.</p>
             <Button type="submit" disabled={!isAdmin || connecting}>{connecting ? "Connecting…" : "Connect provider"}</Button>
             {notice ? (
