@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- The demo wallet (`/demo-wallet`) keeps its user, balance and reload history in browser localStorage and talks to the senangPay (DOKU) sandbox through its own server functions — so reloads can be tested without MySQL; never route it through the seeded SENANGPAY provider rows.
