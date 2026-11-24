@@ -27,11 +27,14 @@ import { Route as TransfersRouteImport } from './routes/transfers'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as WalletsRouteImport } from './routes/wallets'
 import { Route as ApiV1MerchantsRouteImport } from './routes/api/v1/merchants'
+import { Route as ApiV1PaymentProvidersRouteImport } from './routes/api/v1/payment-providers'
 import { Route as ApiV1AuthLoginRouteImport } from './routes/api/v1/auth/login'
 import { Route as ApiV1UsersSyncRouteImport } from './routes/api/v1/users/sync'
+import { Route as ApiV1WalletsReloadRouteImport } from './routes/api/v1/wallets/reload'
 import { Route as ApiV1UsersDependentsSyncRouteImport } from './routes/api/v1/users/dependents/sync'
 import { Route as ApiV1UsersMeBalanceRouteImport } from './routes/api/v1/users/me/balance'
 import { Route as ApiV1UsersMeDependentsRouteImport } from './routes/api/v1/users/me/dependents'
+import { Route as ApiV1WalletsReloadConfirmRouteImport } from './routes/api/v1/wallets/reload.confirm'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -123,6 +126,11 @@ const ApiV1MerchantsRoute = ApiV1MerchantsRouteImport.update({
   path: '/api/v1/merchants',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1PaymentProvidersRoute = ApiV1PaymentProvidersRouteImport.update({
+  id: '/api/v1/payment-providers',
+  path: '/api/v1/payment-providers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1AuthLoginRoute = ApiV1AuthLoginRouteImport.update({
   id: '/api/v1/auth/login',
   path: '/api/v1/auth/login',
@@ -131,6 +139,11 @@ const ApiV1AuthLoginRoute = ApiV1AuthLoginRouteImport.update({
 const ApiV1UsersSyncRoute = ApiV1UsersSyncRouteImport.update({
   id: '/api/v1/users/sync',
   path: '/api/v1/users/sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1WalletsReloadRoute = ApiV1WalletsReloadRouteImport.update({
+  id: '/api/v1/wallets/reload',
+  path: '/api/v1/wallets/reload',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiV1UsersDependentsSyncRoute =
@@ -149,6 +162,12 @@ const ApiV1UsersMeDependentsRoute = ApiV1UsersMeDependentsRouteImport.update({
   path: '/api/v1/users/me/dependents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1WalletsReloadConfirmRoute =
+  ApiV1WalletsReloadConfirmRouteImport.update({
+    id: '/confirm',
+    path: '/confirm',
+    getParentRoute: () => ApiV1WalletsReloadRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -169,11 +188,14 @@ export interface FileRoutesByFullPath {
   '/users': typeof UsersRoute
   '/wallets': typeof WalletsRoute
   '/api/v1/merchants': typeof ApiV1MerchantsRoute
+  '/api/v1/payment-providers': typeof ApiV1PaymentProvidersRoute
   '/api/v1/auth/login': typeof ApiV1AuthLoginRoute
   '/api/v1/users/sync': typeof ApiV1UsersSyncRoute
+  '/api/v1/wallets/reload': typeof ApiV1WalletsReloadRouteWithChildren
   '/api/v1/users/dependents/sync': typeof ApiV1UsersDependentsSyncRoute
   '/api/v1/users/me/balance': typeof ApiV1UsersMeBalanceRoute
   '/api/v1/users/me/dependents': typeof ApiV1UsersMeDependentsRoute
+  '/api/v1/wallets/reload/confirm': typeof ApiV1WalletsReloadConfirmRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -194,11 +216,14 @@ export interface FileRoutesByTo {
   '/users': typeof UsersRoute
   '/wallets': typeof WalletsRoute
   '/api/v1/merchants': typeof ApiV1MerchantsRoute
+  '/api/v1/payment-providers': typeof ApiV1PaymentProvidersRoute
   '/api/v1/auth/login': typeof ApiV1AuthLoginRoute
   '/api/v1/users/sync': typeof ApiV1UsersSyncRoute
+  '/api/v1/wallets/reload': typeof ApiV1WalletsReloadRouteWithChildren
   '/api/v1/users/dependents/sync': typeof ApiV1UsersDependentsSyncRoute
   '/api/v1/users/me/balance': typeof ApiV1UsersMeBalanceRoute
   '/api/v1/users/me/dependents': typeof ApiV1UsersMeDependentsRoute
+  '/api/v1/wallets/reload/confirm': typeof ApiV1WalletsReloadConfirmRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -220,11 +245,14 @@ export interface FileRoutesById {
   '/users': typeof UsersRoute
   '/wallets': typeof WalletsRoute
   '/api/v1/merchants': typeof ApiV1MerchantsRoute
+  '/api/v1/payment-providers': typeof ApiV1PaymentProvidersRoute
   '/api/v1/auth/login': typeof ApiV1AuthLoginRoute
   '/api/v1/users/sync': typeof ApiV1UsersSyncRoute
+  '/api/v1/wallets/reload': typeof ApiV1WalletsReloadRouteWithChildren
   '/api/v1/users/dependents/sync': typeof ApiV1UsersDependentsSyncRoute
   '/api/v1/users/me/balance': typeof ApiV1UsersMeBalanceRoute
   '/api/v1/users/me/dependents': typeof ApiV1UsersMeDependentsRoute
+  '/api/v1/wallets/reload/confirm': typeof ApiV1WalletsReloadConfirmRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -247,11 +275,14 @@ export interface FileRouteTypes {
     | '/users'
     | '/wallets'
     | '/api/v1/merchants'
+    | '/api/v1/payment-providers'
     | '/api/v1/auth/login'
     | '/api/v1/users/sync'
+    | '/api/v1/wallets/reload'
     | '/api/v1/users/dependents/sync'
     | '/api/v1/users/me/balance'
     | '/api/v1/users/me/dependents'
+    | '/api/v1/wallets/reload/confirm'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -272,11 +303,14 @@ export interface FileRouteTypes {
     | '/users'
     | '/wallets'
     | '/api/v1/merchants'
+    | '/api/v1/payment-providers'
     | '/api/v1/auth/login'
     | '/api/v1/users/sync'
+    | '/api/v1/wallets/reload'
     | '/api/v1/users/dependents/sync'
     | '/api/v1/users/me/balance'
     | '/api/v1/users/me/dependents'
+    | '/api/v1/wallets/reload/confirm'
   id:
     | '__root__'
     | '/'
@@ -297,11 +331,14 @@ export interface FileRouteTypes {
     | '/users'
     | '/wallets'
     | '/api/v1/merchants'
+    | '/api/v1/payment-providers'
     | '/api/v1/auth/login'
     | '/api/v1/users/sync'
+    | '/api/v1/wallets/reload'
     | '/api/v1/users/dependents/sync'
     | '/api/v1/users/me/balance'
     | '/api/v1/users/me/dependents'
+    | '/api/v1/wallets/reload/confirm'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -323,8 +360,10 @@ export interface RootRouteChildren {
   UsersRoute: typeof UsersRoute
   WalletsRoute: typeof WalletsRoute
   ApiV1MerchantsRoute: typeof ApiV1MerchantsRoute
+  ApiV1PaymentProvidersRoute: typeof ApiV1PaymentProvidersRoute
   ApiV1AuthLoginRoute: typeof ApiV1AuthLoginRoute
   ApiV1UsersSyncRoute: typeof ApiV1UsersSyncRoute
+  ApiV1WalletsReloadRoute: typeof ApiV1WalletsReloadRouteWithChildren
   ApiV1UsersDependentsSyncRoute: typeof ApiV1UsersDependentsSyncRoute
   ApiV1UsersMeBalanceRoute: typeof ApiV1UsersMeBalanceRoute
   ApiV1UsersMeDependentsRoute: typeof ApiV1UsersMeDependentsRoute
@@ -458,6 +497,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1MerchantsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/payment-providers': {
+      id: '/api/v1/payment-providers'
+      path: '/api/v1/payment-providers'
+      fullPath: '/api/v1/payment-providers'
+      preLoaderRoute: typeof ApiV1PaymentProvidersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/auth/login': {
       id: '/api/v1/auth/login'
       path: '/api/v1/auth/login'
@@ -470,6 +516,13 @@ declare module '@tanstack/react-router' {
       path: '/api/v1/users/sync'
       fullPath: '/api/v1/users/sync'
       preLoaderRoute: typeof ApiV1UsersSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/wallets/reload': {
+      id: '/api/v1/wallets/reload'
+      path: '/api/v1/wallets/reload'
+      fullPath: '/api/v1/wallets/reload'
+      preLoaderRoute: typeof ApiV1WalletsReloadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/users/dependents/sync': {
@@ -493,8 +546,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1UsersMeDependentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/wallets/reload/confirm': {
+      id: '/api/v1/wallets/reload/confirm'
+      path: '/confirm'
+      fullPath: '/api/v1/wallets/reload/confirm'
+      preLoaderRoute: typeof ApiV1WalletsReloadConfirmRouteImport
+      parentRoute: typeof ApiV1WalletsReloadRoute
+    }
   }
 }
+
+interface ApiV1WalletsReloadRouteChildren {
+  ApiV1WalletsReloadConfirmRoute: typeof ApiV1WalletsReloadConfirmRoute
+}
+
+const ApiV1WalletsReloadRouteChildren: ApiV1WalletsReloadRouteChildren = {
+  ApiV1WalletsReloadConfirmRoute: ApiV1WalletsReloadConfirmRoute,
+}
+
+const ApiV1WalletsReloadRouteWithChildren =
+  ApiV1WalletsReloadRoute._addFileChildren(ApiV1WalletsReloadRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -515,8 +586,10 @@ const rootRouteChildren: RootRouteChildren = {
   UsersRoute: UsersRoute,
   WalletsRoute: WalletsRoute,
   ApiV1MerchantsRoute: ApiV1MerchantsRoute,
+  ApiV1PaymentProvidersRoute: ApiV1PaymentProvidersRoute,
   ApiV1AuthLoginRoute: ApiV1AuthLoginRoute,
   ApiV1UsersSyncRoute: ApiV1UsersSyncRoute,
+  ApiV1WalletsReloadRoute: ApiV1WalletsReloadRouteWithChildren,
   ApiV1UsersDependentsSyncRoute: ApiV1UsersDependentsSyncRoute,
   ApiV1UsersMeBalanceRoute: ApiV1UsersMeBalanceRoute,
   ApiV1UsersMeDependentsRoute: ApiV1UsersMeDependentsRoute,
