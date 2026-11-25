@@ -25,6 +25,7 @@ import { Route as RegistrationRouteImport } from './routes/registration'
 import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as TransfersRouteImport } from './routes/transfers'
 import { Route as UsersRouteImport } from './routes/users'
+import { Route as WalletTestRouteImport } from './routes/wallet-test'
 import { Route as WalletsRouteImport } from './routes/wallets'
 import { Route as ApiV1MerchantsRouteImport } from './routes/api/v1/merchants'
 import { Route as ApiV1PaymentProvidersRouteImport } from './routes/api/v1/payment-providers'
@@ -116,6 +117,11 @@ const UsersRoute = UsersRouteImport.update({
   path: '/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WalletTestRoute = WalletTestRouteImport.update({
+  id: '/wallet-test',
+  path: '/wallet-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WalletsRoute = WalletsRouteImport.update({
   id: '/wallets',
   path: '/wallets',
@@ -186,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/transactions': typeof TransactionsRoute
   '/transfers': typeof TransfersRoute
   '/users': typeof UsersRoute
+  '/wallet-test': typeof WalletTestRoute
   '/wallets': typeof WalletsRoute
   '/api/v1/merchants': typeof ApiV1MerchantsRoute
   '/api/v1/payment-providers': typeof ApiV1PaymentProvidersRoute
@@ -214,6 +221,7 @@ export interface FileRoutesByTo {
   '/transactions': typeof TransactionsRoute
   '/transfers': typeof TransfersRoute
   '/users': typeof UsersRoute
+  '/wallet-test': typeof WalletTestRoute
   '/wallets': typeof WalletsRoute
   '/api/v1/merchants': typeof ApiV1MerchantsRoute
   '/api/v1/payment-providers': typeof ApiV1PaymentProvidersRoute
@@ -243,6 +251,7 @@ export interface FileRoutesById {
   '/transactions': typeof TransactionsRoute
   '/transfers': typeof TransfersRoute
   '/users': typeof UsersRoute
+  '/wallet-test': typeof WalletTestRoute
   '/wallets': typeof WalletsRoute
   '/api/v1/merchants': typeof ApiV1MerchantsRoute
   '/api/v1/payment-providers': typeof ApiV1PaymentProvidersRoute
@@ -273,6 +282,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/transfers'
     | '/users'
+    | '/wallet-test'
     | '/wallets'
     | '/api/v1/merchants'
     | '/api/v1/payment-providers'
@@ -301,6 +311,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/transfers'
     | '/users'
+    | '/wallet-test'
     | '/wallets'
     | '/api/v1/merchants'
     | '/api/v1/payment-providers'
@@ -329,6 +340,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/transfers'
     | '/users'
+    | '/wallet-test'
     | '/wallets'
     | '/api/v1/merchants'
     | '/api/v1/payment-providers'
@@ -358,6 +370,7 @@ export interface RootRouteChildren {
   TransactionsRoute: typeof TransactionsRoute
   TransfersRoute: typeof TransfersRoute
   UsersRoute: typeof UsersRoute
+  WalletTestRoute: typeof WalletTestRoute
   WalletsRoute: typeof WalletsRoute
   ApiV1MerchantsRoute: typeof ApiV1MerchantsRoute
   ApiV1PaymentProvidersRoute: typeof ApiV1PaymentProvidersRoute
@@ -483,6 +496,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/wallet-test': {
+      id: '/wallet-test'
+      path: '/wallet-test'
+      fullPath: '/wallet-test'
+      preLoaderRoute: typeof WalletTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/wallets': {
       id: '/wallets'
       path: '/wallets'
@@ -584,6 +604,7 @@ const rootRouteChildren: RootRouteChildren = {
   TransactionsRoute: TransactionsRoute,
   TransfersRoute: TransfersRoute,
   UsersRoute: UsersRoute,
+  WalletTestRoute: WalletTestRoute,
   WalletsRoute: WalletsRoute,
   ApiV1MerchantsRoute: ApiV1MerchantsRoute,
   ApiV1PaymentProvidersRoute: ApiV1PaymentProvidersRoute,

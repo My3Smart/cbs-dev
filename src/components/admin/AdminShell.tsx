@@ -40,6 +40,7 @@ const nav = [
   { to: "/transfers", label: "Transfers", icon: ArrowLeftRight, group: "Financial" },
   { to: "/providers", label: "Payment Providers", icon: PlugZap, group: "Operations" },
   { to: "/payment-test", label: "Payment Test", icon: FlaskConical, group: "Operations" },
+  { to: "/wallet-test", label: "Wallet Reload Test", icon: Wallet, group: "Operations" },
   { to: "/audit", label: "Audit Trail", icon: ScrollText, group: "Operations" },
 ] as const;
 
