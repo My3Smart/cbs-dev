@@ -1,25 +1,43 @@
 
 import { createFileRoute } from '@tanstack/react-router'
-import { query } from '../../../../lib/mysql.server'
+import {
+  query,
+  tx,
+  newId,
+  ensureWallet,
+} from '../../../../lib/mysql.server'
 import crypto from 'node:crypto'
 
 type UserRow = {
   id: string
   user_code: string
   organization_id: string
+  status: string
+}
+
+type PartyRow = {
+  id: string
+  organization_id: string | null
+  party_type: string
+  status: string
 }
 
 function authorized(request: Request): boolean {
   const expected = process.env["CBS_SKOOLA_SYNC_API_KEY"]
+
   const provided =
-    request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? ''
+    request.headers.get('authorization')
+      ?.replace(/^Bearer\s+/i, '') ?? ''
 
   if (!expected || !provided) return false
 
   const a = Buffer.from(provided)
   const b = Buffer.from(expected)
 
-  return a.length === b.length && crypto.timingSafeEqual(a, b)
+  return (
+    a.length === b.length &&
+    crypto.timingSafeEqual(a, b)
+  )
 }
 
 export const Route = createFileRoute('/api/v1/users/sync')({
@@ -45,6 +63,7 @@ export const Route = createFileRoute('/api/v1/users/sync')({
             password_hash
           } = body
 
+          // Validate required fields.
           if (
             typeof organization_id !== 'string' ||
             typeof user_code !== 'string' ||
@@ -56,27 +75,15 @@ export const Route = createFileRoute('/api/v1/users/sync')({
             (mobile != null && typeof mobile !== 'string')
           ) {
             return Response.json(
-              { success: false, message: 'Invalid or missing fields.' },
+              {
+                success: false,
+                message: 'Invalid or missing fields.'
+              },
               { status: 422 }
             )
           }
 
-          // Password is optional for students.
-          // Only bcrypt hashes are accepted.
-          if (
-            password_hash !== undefined &&
-            password_hash !== null &&
-            (
-              typeof password_hash !== 'string' ||
-              !/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(password_hash)
-            )
-          ) {
-            return Response.json(
-              { success: false, message: 'Invalid password hash format.' },
-              { status: 422 }
-            )
-          }
-
+          // Validate field lengths and organization UUID.
           if (
             !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(organization_id) ||
             user_code.length > 40 ||
@@ -85,132 +92,298 @@ export const Route = createFileRoute('/api/v1/users/sync')({
             (mobile != null && mobile.length > 40)
           ) {
             return Response.json(
-              { success: false, message: 'Invalid field length or organization ID.' },
+              {
+                success: false,
+                message: 'Invalid field length or organization ID.'
+              },
               { status: 422 }
             )
           }
 
+          // Validate bcrypt password hash.
           if (
-            organization_id !== process.env["CBS_SKOOLA_ORGANIZATION_ID"]
+            password_hash != null &&
+            (
+              typeof password_hash !== 'string' ||
+              !/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(password_hash)
+            )
           ) {
             return Response.json(
-              { success: false, message: 'Organization is not permitted.' },
+              {
+                success: false,
+                message: 'Invalid password hash format.'
+              },
+              { status: 422 }
+            )
+          }
+
+          // Restrict synchronization to Skoola organization.
+          if (
+            organization_id !==
+            process.env["CBS_SKOOLA_ORGANIZATION_ID"]
+          ) {
+            return Response.json(
+              {
+                success: false,
+                message: 'Organization is not permitted.'
+              },
               { status: 403 }
             )
           }
 
-          // Find user by stable SKOOLA user code.
-          const existing = await query<UserRow>(
-            `
-            SELECT id, user_code, organization_id
-            FROM users
-            WHERE user_code = ?
-            LIMIT 1
-            `,
-            [user_code]
-          )
+          // Run all provisioning inside one transaction.
+          const result = await tx(async (conn) => {
 
-          if (existing.length > 0) {
-            // Never modify an account belonging to another organization.
-            if (existing[0]!.organization_id !== organization_id) {
-              return Response.json(
-                { success: false, message: 'User belongs to another organization.' },
-                { status: 403 }
-              )
-            }
-
-            if (password_hash != null) {
-              await query(
-                `
-                UPDATE users
-                SET full_name = ?,
-                    email = ?,
-                    mobile = ?,
-                    password_hash = ?
-                WHERE id = ?
-                  AND organization_id = ?
-                `,
-                [
-                  full_name,
-                  email ?? null,
-                  mobile ?? null,
-                  password_hash,
-                  existing[0]!.id,
-                  organization_id
-                ]
-              )
-            } else {
-              // Preserve existing password when no hash is supplied.
-              await query(
-                `
-                UPDATE users
-                SET full_name = ?,
-                    email = ?,
-                    mobile = ?
-                WHERE id = ?
-                  AND organization_id = ?
-                `,
-                [
-                  full_name,
-                  email ?? null,
-                  mobile ?? null,
-                  existing[0]!.id,
-                  organization_id
-                ]
-              )
-            }
-
-            return Response.json({
-              success: true,
-              created: false,
-              userId: existing[0]!.id
-            })
-          }
-
-          // Create new CBS user.
-          const id = crypto.randomUUID()
-
-          await query(
-            `
-            INSERT INTO users (
-              id,
-              organization_id,
-              user_code,
-              full_name,
-              email,
-              mobile,
-              password_hash,
-              kyc_status,
-              status
+            // STEP 1: Find existing CBS user.
+            const existing = await query<UserRow>(
+              `
+              SELECT id, user_code, organization_id, status
+              FROM users
+              WHERE user_code = ?
+              LIMIT 1
+              FOR UPDATE
+              `,
+              [user_code],
+              conn
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'UNVERIFIED', 'ACTIVE')
-            `,
-            [
-              id,
-              organization_id,
-              user_code,
-              full_name,
-              email ?? null,
-              mobile ?? null,
-              password_hash ?? null
-            ]
-          )
 
-          return Response.json({
-            success: true,
-            created: true,
-            userId: id
+            let userId: string
+            let userStatus = 'ACTIVE'
+            let created = false
+
+            if (existing.length > 0) {
+              const user = existing[0]!
+
+              if (user.organization_id !== organization_id) {
+                throw new Error('ORGANIZATION_MISMATCH')
+              }
+
+              userId = user.id
+              userStatus = user.status
+
+              // Update existing user.
+              if (password_hash != null) {
+                await conn.query(
+                  `
+                  UPDATE users
+                  SET full_name = ?,
+                      email = ?,
+                      mobile = ?,
+                      password_hash = ?
+                  WHERE id = ?
+                    AND organization_id = ?
+                  `,
+                  [
+                    full_name,
+                    email ?? null,
+                    mobile ?? null,
+                    password_hash,
+                    userId,
+                    organization_id
+                  ]
+                )
+              } else {
+                // Preserve existing password.
+                await conn.query(
+                  `
+                  UPDATE users
+                  SET full_name = ?,
+                      email = ?,
+                      mobile = ?
+                  WHERE id = ?
+                    AND organization_id = ?
+                  `,
+                  [
+                    full_name,
+                    email ?? null,
+                    mobile ?? null,
+                    userId,
+                    organization_id
+                  ]
+                )
+              }
+
+            } else {
+
+              // STEP 2: Create new CBS user.
+              userId = crypto.randomUUID()
+
+              await conn.query(
+                `
+                INSERT INTO users (
+                  id,
+                  organization_id,
+                  user_code,
+                  full_name,
+                  email,
+                  mobile,
+                  password_hash,
+                  kyc_status,
+                  status
+                )
+                VALUES (
+                  ?, ?, ?, ?, ?, ?, ?,
+                  'UNVERIFIED', 'ACTIVE'
+                )
+                `,
+                [
+                  userId,
+                  organization_id,
+                  user_code,
+                  full_name,
+                  email ?? null,
+                  mobile ?? null,
+                  password_hash ?? null
+                ]
+              )
+
+              created = true
+            }
+
+            // STEP 3: Find existing party.
+            const parties = await query<PartyRow>(
+              `
+              SELECT id, organization_id, party_type, status
+              FROM parties
+              WHERE user_id = ?
+              FOR UPDATE
+              `,
+              [userId],
+              conn
+            )
+
+            let partyId: string
+            let partyStatus = userStatus
+
+            if (parties.length > 1) {
+              throw new Error('DUPLICATE_USER_PARTIES')
+            }
+
+            if (parties.length > 0) {
+              const party = parties[0]!
+
+              if (
+                party.party_type !== 'USER' ||
+                (
+                  party.organization_id !== null &&
+                  party.organization_id !== organization_id
+                )
+              ) {
+                throw new Error('PARTY_MISMATCH')
+              }
+
+              partyId = party.id
+              partyStatus = party.status
+
+              // Update existing party details.
+              await conn.query(
+                `
+                UPDATE parties
+                SET display_name = ?,
+                    organization_id = ?
+                WHERE id = ?
+                `,
+                [
+                  full_name,
+                  organization_id,
+                  partyId
+                ]
+              )
+
+            } else {
+
+              // STEP 4: Create missing party.
+              partyId = await newId(conn)
+
+              await conn.query(
+                `
+                INSERT INTO parties (
+                  id,
+                  user_id,
+                  organization_id,
+                  party_type,
+                  display_name,
+                  status
+                )
+                VALUES (?, ?, ?, 'USER', ?, ?)
+                `,
+                [
+                  partyId,
+                  userId,
+                  organization_id,
+                  full_name,
+                  userStatus
+                ]
+              )
+            }
+
+            // Do not provision new wallets for inactive users
+            // or inactive parties.
+            if (
+              userStatus !== 'ACTIVE' ||
+              partyStatus !== 'ACTIVE'
+            ) {
+              return {
+                success: true,
+                created,
+                userId,
+                partyId,
+                walletProvisioned: false
+              }
+            }
+
+            // STEP 5: Automatically create missing:
+            // - Financial account
+            // - Wallet
+            // - Ledger account
+            //
+            // Existing records and balances are preserved.
+            const provisioned = await ensureWallet(
+              conn,
+              partyId
+            )
+
+            return {
+              success: true,
+              created,
+              userId,
+              partyId,
+              walletProvisioned: true,
+              accountId: provisioned.accountId,
+              accountNumber: provisioned.accountNumber,
+              walletId: provisioned.wallet.id,
+              walletNumber: provisioned.wallet.wallet_number,
+              ledgerAccountId: provisioned.ledgerAccountId
+            }
           })
 
-        } catch (error: any) {
-          // Do not log request bodies or password hashes.
-          console.error('CBS user sync error code:', error?.code ?? 'UNKNOWN')
+          return Response.json(result)
 
-          if (error?.code === 'ER_DUP_ENTRY') {
+        } catch (error: any) {
+          console.error(
+            'CBS user sync error:',
+            error?.code ?? error?.message ?? 'UNKNOWN'
+          )
+
+          if (error?.message === 'ORGANIZATION_MISMATCH') {
             return Response.json(
               {
                 success: false,
-                message: 'User code or unique field already exists.'
+                message: 'User belongs to another organization.'
+              },
+              { status: 403 }
+            )
+          }
+
+          if (
+            error?.code === 'ER_DUP_ENTRY' ||
+            error?.message === 'DUPLICATE_USER_PARTIES' ||
+            error?.message === 'PARTY_MISMATCH'
+          ) {
+            return Response.json(
+              {
+                success: false,
+                message: 'Conflicting CBS account records.'
               },
               { status: 409 }
             )
