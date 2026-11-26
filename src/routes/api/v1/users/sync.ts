@@ -251,7 +251,7 @@ export const Route = createFileRoute('/api/v1/users/sync')({
                   status
                 )
                 VALUES (
-                  ?, ?, ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?, ?, ?,?,
                   'UNVERIFIED', 'ACTIVE'
                 )
                 `,
