@@ -15,6 +15,9 @@ type DependentRow = {
   email: string | null
   mobile: string | null
   status: string
+  wallet_number: string | null
+  currency: string | null
+  available_balance: string | number | null
 }
 
 export const Route = createFileRoute(
@@ -44,12 +47,18 @@ export const Route = createFileRoute(
               u.full_name,
               u.email,
               u.mobile,
-              u.status
+              u.status,
+              w.wallet_number,
+              w.currency,
+              w.available_balance
 
             FROM user_dependents ud
 
             INNER JOIN users u
               ON u.id = ud.child_id
+            LEFT JOIN parties p ON p.user_id = u.id AND p.party_type = 'USER'
+            LEFT JOIN accounts a ON a.party_id = p.id AND a.account_type = 'WALLET'
+            LEFT JOIN wallets w ON w.account_id = a.id
 
             WHERE ud.guardian_id = ?
 
@@ -73,7 +82,10 @@ export const Route = createFileRoute(
               fullName: row.full_name,
               email: row.email,
               mobile: row.mobile,
-              status: row.status
+              status: row.status,
+              walletNumber: row.wallet_number,
+              currency: row.currency ?? 'MYR',
+              availableBalance: Number(row.available_balance) || 0
             }))
           })
         } catch (error: any) {

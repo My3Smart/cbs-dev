@@ -132,63 +132,6 @@ export type Database = {
           },
         ]
       }
-      customers: {
-        Row: {
-          cluster_id: string | null
-          created_at: string
-          email: string | null
-          full_name: string
-          id: string
-          kyc_status: string
-          mobile: string | null
-          organization_id: string
-          status: Database["public"]["Enums"]["entity_status"]
-          updated_at: string
-          user_code: string
-        }
-        Insert: {
-          cluster_id?: string | null
-          created_at?: string
-          email?: string | null
-          full_name: string
-          id?: string
-          kyc_status?: string
-          mobile?: string | null
-          organization_id: string
-          status?: Database["public"]["Enums"]["entity_status"]
-          updated_at?: string
-          user_code: string
-        }
-        Update: {
-          cluster_id?: string | null
-          created_at?: string
-          email?: string | null
-          full_name?: string
-          id?: string
-          kyc_status?: string
-          mobile?: string | null
-          organization_id?: string
-          status?: Database["public"]["Enums"]["entity_status"]
-          updated_at?: string
-          user_code?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "customers_cluster_id_fkey"
-            columns: ["cluster_id"]
-            isOneToOne: false
-            referencedRelation: "clusters"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "customers_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ledger_accounts: {
         Row: {
           account_class: Database["public"]["Enums"]["ledger_account_class"]
@@ -398,7 +341,6 @@ export type Database = {
       parties: {
         Row: {
           created_at: string
-          customer_id: string | null
           display_name: string
           id: string
           merchant_id: string | null
@@ -406,10 +348,10 @@ export type Database = {
           party_type: Database["public"]["Enums"]["party_type"]
           status: Database["public"]["Enums"]["entity_status"]
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
-          customer_id?: string | null
           display_name: string
           id?: string
           merchant_id?: string | null
@@ -417,10 +359,10 @@ export type Database = {
           party_type: Database["public"]["Enums"]["party_type"]
           status?: Database["public"]["Enums"]["entity_status"]
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
-          customer_id?: string | null
           display_name?: string
           id?: string
           merchant_id?: string | null
@@ -428,13 +370,14 @@ export type Database = {
           party_type?: Database["public"]["Enums"]["party_type"]
           status?: Database["public"]["Enums"]["entity_status"]
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "parties_customer_id_fkey"
-            columns: ["customer_id"]
+            columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "customers"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -449,6 +392,85 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_intents: {
+        Row: {
+          amount: number
+          checkout_url: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          environment: string
+          id: string
+          metadata: Json
+          method_code: string | null
+          provider_id: string
+          provider_reference: string | null
+          reference: string
+          status: string
+          transaction_id: string | null
+          updated_at: string
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          checkout_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          environment?: string
+          id?: string
+          metadata?: Json
+          method_code?: string | null
+          provider_id: string
+          provider_reference?: string | null
+          reference: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          checkout_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          environment?: string
+          id?: string
+          metadata?: Json
+          method_code?: string | null
+          provider_id?: string
+          provider_reference?: string | null
+          reference?: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_intents_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "payment_providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_intents_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_intents_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
             referencedColumns: ["id"]
           },
         ]
@@ -493,40 +515,67 @@ export type Database = {
       }
       payment_providers: {
         Row: {
+          api_base_url: string | null
+          auth_header: string
+          auth_type: string
+          charge_path: string
           code: string
+          config: Json
           created_at: string
+          credential_secret_name: string | null
           enabled: boolean
           environment: string
           id: string
           name: string
           notes: string | null
           priority: number
+          sandbox_base_url: string | null
           status: Database["public"]["Enums"]["entity_status"]
+          status_path: string
           updated_at: string
+          webhook_url: string | null
         }
         Insert: {
+          api_base_url?: string | null
+          auth_header?: string
+          auth_type?: string
+          charge_path?: string
           code: string
+          config?: Json
           created_at?: string
+          credential_secret_name?: string | null
           enabled?: boolean
           environment?: string
           id?: string
           name: string
           notes?: string | null
           priority?: number
+          sandbox_base_url?: string | null
           status?: Database["public"]["Enums"]["entity_status"]
+          status_path?: string
           updated_at?: string
+          webhook_url?: string | null
         }
         Update: {
+          api_base_url?: string | null
+          auth_header?: string
+          auth_type?: string
+          charge_path?: string
           code?: string
+          config?: Json
           created_at?: string
+          credential_secret_name?: string | null
           enabled?: boolean
           environment?: string
           id?: string
           name?: string
           notes?: string | null
           priority?: number
+          sandbox_base_url?: string | null
           status?: Database["public"]["Enums"]["entity_status"]
+          status_path?: string
           updated_at?: string
+          webhook_url?: string | null
         }
         Relationships: []
       }
@@ -704,6 +753,63 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      users: {
+        Row: {
+          cluster_id: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          kyc_status: string
+          mobile: string | null
+          organization_id: string
+          status: Database["public"]["Enums"]["entity_status"]
+          updated_at: string
+          user_code: string
+        }
+        Insert: {
+          cluster_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          kyc_status?: string
+          mobile?: string | null
+          organization_id: string
+          status?: Database["public"]["Enums"]["entity_status"]
+          updated_at?: string
+          user_code: string
+        }
+        Update: {
+          cluster_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          kyc_status?: string
+          mobile?: string | null
+          organization_id?: string
+          status?: Database["public"]["Enums"]["entity_status"]
+          updated_at?: string
+          user_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_cluster_id_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "clusters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wallets: {
         Row: {
