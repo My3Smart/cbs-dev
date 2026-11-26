@@ -8,6 +8,10 @@ import {
 } from '../../../../lib/mysql.server'
 import crypto from 'node:crypto'
 
+type ClusterRow = {
+  id: string
+}
+
 type UserRow = {
   id: string
   user_code: string
@@ -134,6 +138,26 @@ export const Route = createFileRoute('/api/v1/users/sync')({
           // Run all provisioning inside one transaction.
           const result = await tx(async (conn) => {
 
+            // Retrieve the active Skowla cluster.
+            const clusters = await query<ClusterRow>(
+              `
+  SELECT id
+  FROM clusters
+  WHERE organization_id = ?
+    AND code = ?
+    AND status = 'ACTIVE'
+  FOR UPDATE
+  `,
+              [organization_id, 'CLS-SKW'],
+              conn
+            )
+
+            if (clusters.length !== 1) {
+              throw new Error('SKOWLA_CLUSTER_INVALID')
+            }
+
+            const clusterId = clusters[0]!.id
+
             // STEP 1: Find existing CBS user.
             const existing = await query<UserRow>(
               `
@@ -170,6 +194,7 @@ export const Route = createFileRoute('/api/v1/users/sync')({
                       email = ?,
                       mobile = ?,
                       password_hash = ?
+                      cluster_id = ?
                   WHERE id = ?
                     AND organization_id = ?
                   `,
@@ -178,6 +203,7 @@ export const Route = createFileRoute('/api/v1/users/sync')({
                     email ?? null,
                     mobile ?? null,
                     password_hash,
+                    clusterId,
                     userId,
                     organization_id
                   ]
@@ -190,6 +216,7 @@ export const Route = createFileRoute('/api/v1/users/sync')({
                   SET full_name = ?,
                       email = ?,
                       mobile = ?
+                      cluster_id = ?
                   WHERE id = ?
                     AND organization_id = ?
                   `,
@@ -197,6 +224,7 @@ export const Route = createFileRoute('/api/v1/users/sync')({
                     full_name,
                     email ?? null,
                     mobile ?? null,
+                    clusterId,
                     userId,
                     organization_id
                   ]
@@ -213,6 +241,7 @@ export const Route = createFileRoute('/api/v1/users/sync')({
                 INSERT INTO users (
                   id,
                   organization_id,
+                  cluster_id,
                   user_code,
                   full_name,
                   email,
@@ -229,6 +258,7 @@ export const Route = createFileRoute('/api/v1/users/sync')({
                 [
                   userId,
                   organization_id,
+                  clusterId,
                   user_code,
                   full_name,
                   email ?? null,
@@ -364,6 +394,16 @@ export const Route = createFileRoute('/api/v1/users/sync')({
             'CBS user sync error:',
             error?.code ?? error?.message ?? 'UNKNOWN'
           )
+
+          if (error?.message === 'SKOWLA_CLUSTER_INVALID') {
+            return Response.json(
+              {
+                success: false,
+                message: 'CLS-SKW cluster is missing, inactive or duplicated.'
+              },
+              { status: 500 }
+            )
+          }
 
           if (error?.message === 'ORGANIZATION_MISMATCH') {
             return Response.json(
