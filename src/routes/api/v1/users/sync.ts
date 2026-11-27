@@ -193,7 +193,7 @@ export const Route = createFileRoute('/api/v1/users/sync')({
                   SET full_name = ?,
                       email = ?,
                       mobile = ?,
-                      password_hash = ?
+                      password_hash = ?,
                       cluster_id = ?
                   WHERE id = ?
                     AND organization_id = ?
@@ -215,7 +215,7 @@ export const Route = createFileRoute('/api/v1/users/sync')({
                   UPDATE users
                   SET full_name = ?,
                       email = ?,
-                      mobile = ?
+                      mobile = ?,
                       cluster_id = ?
                   WHERE id = ?
                     AND organization_id = ?
